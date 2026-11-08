@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+build/
+coverage/
+.env*
+!.env.example
+public/hero-lotus-ghee.png
+public/natural-origin-cows.png
+public/*-ultrahd.png
+public/cow/*.png
+public/buffalo/*.png
