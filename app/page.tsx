@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 
 const benefits = [
   { icon: "leaf", title: <>100% Pure <span>&amp; Natural</span></>, tone: "green" },
@@ -22,6 +22,16 @@ const ambientParticles = [
   ["14%", "87%", "5px", "8.5s", "2.8s"], ["82%", "81%", "4px", "6.6s", "1.4s"],
   ["46%", "8%", "3px", "7.8s", "3.5s"], ["72%", "27%", "5px", "6.1s", ".4s"],
   ["28%", "59%", "3px", "9s", "2.1s"], ["61%", "92%", "4px", "7.3s", "3.8s"],
+  ["22%", "7%", "3px", "7.4s", "2.7s"], ["39%", "16%", "2px", "6.2s", "1.5s"],
+  ["67%", "12%", "3px", "8.1s", "4.2s"], ["84%", "22%", "2px", "7.2s", "2.3s"],
+  ["16%", "31%", "2px", "8.8s", ".9s"], ["55%", "34%", "3px", "6.7s", "3.4s"],
+  ["76%", "43%", "2px", "9.1s", "1.1s"], ["31%", "49%", "3px", "7.9s", "4.5s"],
+  ["12%", "55%", "2px", "6.4s", "3.7s"], ["49%", "63%", "2px", "8.6s", ".6s"],
+  ["69%", "68%", "3px", "7.5s", "2.9s"], ["91%", "73%", "2px", "6.9s", "4.1s"],
+  ["24%", "76%", "3px", "8.3s", "1.7s"], ["42%", "84%", "2px", "6.5s", "3.2s"],
+  ["58%", "96%", "3px", "9.3s", "1.3s"], ["78%", "91%", "2px", "7.7s", ".8s"],
+  ["7%", "94%", "2px", "8.9s", "2s"], ["97%", "45%", "2px", "6.6s", "3.6s"],
+  ["35%", "25%", "2px", "7.1s", "4.7s"], ["64%", "51%", "2px", "8.4s", "1.9s"],
 ];
 
 const cowGheeSizes = [
@@ -44,8 +54,6 @@ const buffaloGheeSizes = [
   { size: "15 ltr", image: "/buffalo/buffalo-ghee-tin-aligned.webp", packHeight: "100%" },
 ];
 
-type GheeType = "Cow Ghee" | "Buffalo Ghee";
-
 function Icon({ name }: { name: string }) {
   const paths: Record<string, React.ReactNode> = {
     leaf: <><path d="M20 4C11 4 5 8 5 15c0 3 2 5 5 5 7 0 10-7 10-16Z"/><path d="M4 21c3-6 7-9 13-13"/></>,
@@ -63,64 +71,202 @@ function CowScene() {
   return <img className="cow-photo" src="/cow-pasture.webp" alt="A healthy cow and calf grazing in a green pasture" />;
 }
 
-export default function Home() {
-  const [activeGhee, setActiveGhee] = useState<GheeType | null>(null);
-  const [selectedGheeSize, setSelectedGheeSize] = useState("500 ml");
-  const sizeRailRef = useRef<HTMLDivElement>(null);
-  const modalRef = useRef<HTMLElement>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const cowGheeTriggerRef = useRef<HTMLButtonElement>(null);
-  const buffaloGheeTriggerRef = useRef<HTMLButtonElement>(null);
-  const availableGheeSizes = activeGhee === "Buffalo Ghee" ? buffaloGheeSizes : cowGheeSizes;
-  const selectedSizeIndex = availableGheeSizes.findIndex(({ size }) => size === selectedGheeSize);
-  const selectedGheePack = availableGheeSizes[selectedSizeIndex] ?? availableGheeSizes[0];
+function GheeBowlMark() {
+  return <svg className="pack-ghee-mark" viewBox="0 0 160 120" fill="none" aria-hidden="true">
+    <path d="M31 54h98c-4 30-21 49-49 49S35 84 31 54Z" />
+    <path d="M29 53c0-7 22-13 51-13s51 6 51 13-22 13-51 13-51-6-51-13Z" />
+    <path d="M45 73c11 5 22 7 35 7s24-2 35-7M60 104v5h40v-5" />
+    <path d="M79 22c-8 9-10 14-10 19a11 11 0 0 0 22 0c0-5-3-10-12-19Z" />
+    <path d="m113 31 2 5m-2 0 2-5" />
+  </svg>;
+}
 
-  const centerSizeCard = (card: HTMLElement) => {
-    const rail = sizeRailRef.current;
-    if (!rail) return;
-    const cardLeft = card.getBoundingClientRect().left - rail.getBoundingClientRect().left + rail.scrollLeft;
-    rail.scrollTo({ left: cardLeft - (rail.clientWidth - card.clientWidth) / 2, behavior: "smooth" });
+export default function Home() {
+  const moveProductShelf = (button: HTMLButtonElement, direction: -1 | 1) => {
+    const section = button.closest<HTMLElement>("[data-horizontal-section]");
+    const viewport = section?.querySelector<HTMLElement>(".product-scroll-viewport");
+    const track = section?.querySelector<HTMLElement>("[data-horizontal-track]");
+    if (!section || !viewport || !track) return;
+    const behavior: ScrollBehavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+    if (!section.classList.contains("is-scroll-enhanced")) {
+      viewport.scrollBy({ left: direction * viewport.clientWidth * 0.82, behavior });
+      return;
+    }
+    const travel = Math.max(0, track.scrollWidth - viewport.clientWidth);
+    if (!travel) return;
+    const progress = section.classList.contains("is-scroll-enhanced")
+      ? Number(section.querySelector<HTMLElement>("[data-horizontal-track]")?.getAnimations()[0]?.currentTime ?? 0) / 1000
+      : viewport.scrollLeft / travel;
+    const nextProgress = Math.max(0, Math.min(1, progress + direction * viewport.clientWidth * 0.82 / travel));
+    const stickyTop = window.matchMedia("(max-width: 1000px)").matches ? 12 : 76;
+    window.scrollTo({ top: window.scrollY + section.getBoundingClientRect().top - stickyTop + nextProgress * travel, behavior });
   };
 
   useEffect(() => {
-    if (!activeGhee) return;
-    const previousOverflow = document.body.style.overflow;
-    closeButtonRef.current?.focus();
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setActiveGhee(null);
-        return;
-      }
-      if (event.key !== "Tab" || !modalRef.current) return;
-      const focusable = modalRef.current.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), [tabindex]:not([tabindex='-1'])");
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && (document.activeElement === first || !modalRef.current.contains(document.activeElement))) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && (document.activeElement === last || !modalRef.current.contains(document.activeElement))) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
-      (activeGhee === "Buffalo Ghee" ? buffaloGheeTriggerRef : cowGheeTriggerRef).current?.focus();
-    };
-  }, [activeGhee]);
+    const revealItems = document.querySelectorAll<HTMLElement>("[data-reveal]");
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-revealed");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -30px 0px" });
+    revealItems.forEach((item) => observer.observe(item));
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
-    if (!activeGhee) return;
-    const frame = window.requestAnimationFrame(() => {
-      const selectedCard = sizeRailRef.current?.querySelector<HTMLElement>(".ghee-size.selected");
-      if (selectedCard) centerSizeCard(selectedCard);
+    const panels = Array.from(document.querySelectorAll<HTMLElement>("[data-scroll-panel]"));
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let frame = 0;
+    const update = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        panels.forEach((panel) => {
+          if (reducedMotion.matches) {
+            panel.style.removeProperty("transform");
+            panel.style.removeProperty("opacity");
+            return;
+          }
+          const rect = panel.getBoundingClientRect();
+          const range = Math.max(280, Math.min(window.innerHeight * 0.9, rect.height));
+          const progress = Math.max(0, Math.min(1, -rect.top / range));
+          panel.style.transform = `scale(${1 - progress * 0.3})`;
+          panel.style.opacity = String(1 - progress * 0.5);
+        });
+      });
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    reducedMotion.addEventListener("change", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+      reducedMotion.removeEventListener("change", update);
+      if (frame) window.cancelAnimationFrame(frame);
+      panels.forEach((panel) => {
+        panel.style.removeProperty("transform");
+        panel.style.removeProperty("opacity");
+      });
+    };
+  }, []);
+
+  useEffect(() => {
+    const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-horizontal-section]"));
+    const media = window.matchMedia("(prefers-reduced-motion: no-preference)");
+    const rails = sections.map((section) => {
+      const stage = section.querySelector<HTMLElement>(".product-scroll-stage");
+      const viewport = section.querySelector<HTMLElement>(".product-scroll-viewport");
+      const track = section.querySelector<HTMLElement>("[data-horizontal-track]");
+      return { section, stage, viewport, track, travel: 0, animation: null as Animation | null };
+    }).filter((rail) => rail.stage && rail.viewport && rail.track);
+
+    const measure = () => {
+      rails.forEach((rail) => {
+        if (!rail.stage || !rail.viewport || !rail.track) return;
+        rail.animation?.cancel();
+        rail.animation = null;
+        rail.travel = 0;
+        if (rail.stage) {
+          rail.stage.style.removeProperty("transform");
+          rail.stage.style.removeProperty("opacity");
+        }
+        rail.section.classList.remove("is-scroll-enhanced");
+        rail.section.style.removeProperty("--horizontal-section-height");
+        rail.track.style.transform = "";
+        if (!media.matches) return;
+
+        rail.travel = Math.max(0, rail.track.scrollWidth - rail.viewport.clientWidth);
+        if (rail.travel < 80) return;
+        rail.section.style.setProperty("--horizontal-section-height", `${rail.stage.offsetHeight + rail.travel}px`);
+        rail.section.classList.add("is-scroll-enhanced");
+        rail.animation = rail.track.animate(
+          [{ transform: "translateX(0px)" }, { transform: `translateX(-${rail.travel}px)` }],
+          { duration: 1000, fill: "both", easing: "linear" },
+        );
+        rail.animation.pause();
+      });
+      update();
+    };
+
+    let frame = 0;
+    const update = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        rails.forEach((rail) => {
+          if (!rail.viewport || !rail.track) return;
+          let progress = 0;
+          if (rail.animation && rail.travel) {
+            const stickyTop = window.matchMedia("(max-width: 1000px)").matches ? 12 : 76;
+            progress = Math.max(0, Math.min(1, (stickyTop - rail.section.getBoundingClientRect().top) / rail.travel));
+            rail.animation.currentTime = progress * 1000;
+          } else {
+            const horizontalTravel = rail.track.scrollWidth - rail.viewport.clientWidth;
+            if (horizontalTravel > 0) progress = rail.viewport.scrollLeft / horizontalTravel;
+          }
+          const currentPack = rail.section.querySelector<HTMLElement>("[data-scroll-current]");
+          const packCount = Number(rail.section.dataset.scrollTotal) || 0;
+          if (currentPack && packCount) {
+            const packLabel = String(Math.min(packCount, Math.floor(progress * (packCount - 1)) + 1)).padStart(2, "0");
+            if (currentPack.textContent !== packLabel) currentPack.textContent = packLabel;
+          }
+        });
+      });
+    };
+
+    measure();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", measure);
+    media.addEventListener("change", measure);
+    rails.forEach((rail) => rail.viewport?.addEventListener("scroll", update, { passive: true }));
+    const touchStates = rails.map((rail) => {
+      let previousX = 0;
+      let startX = 0;
+      let startY = 0;
+      let horizontal = false;
+      const start = (event: TouchEvent) => {
+        if (!rail.section.classList.contains("is-scroll-enhanced") || event.touches.length !== 1 || (event.target as HTMLElement).closest("a,button")) return;
+        previousX = startX = event.touches[0].clientX;
+        startY = event.touches[0].clientY;
+        horizontal = false;
+      };
+      const move = (event: TouchEvent) => {
+        if (event.touches.length !== 1 || !rail.section.classList.contains("is-scroll-enhanced")) return;
+        const touch = event.touches[0];
+        const deltaX = touch.clientX - startX;
+        const deltaY = touch.clientY - startY;
+        if (!horizontal && Math.abs(deltaX) > 8 && Math.abs(deltaX) > Math.abs(deltaY) * 1.15) horizontal = true;
+        if (!horizontal) return;
+        event.preventDefault();
+        window.scrollBy({ top: previousX - touch.clientX, behavior: "auto" });
+        previousX = touch.clientX;
+      };
+      const end = () => { horizontal = false; };
+      rail.viewport?.addEventListener("touchstart", start, { passive: true });
+      rail.viewport?.addEventListener("touchmove", move, { passive: false });
+      rail.viewport?.addEventListener("touchend", end, { passive: true });
+      rail.viewport?.addEventListener("touchcancel", end, { passive: true });
+      return { viewport: rail.viewport, start, move, end };
     });
-    return () => window.cancelAnimationFrame(frame);
-  }, [activeGhee, selectedGheeSize]);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", measure);
+      media.removeEventListener("change", measure);
+      rails.forEach((rail) => rail.viewport?.removeEventListener("scroll", update));
+      touchStates.forEach(({ viewport, start, move, end }) => {
+        viewport?.removeEventListener("touchstart", start);
+        viewport?.removeEventListener("touchmove", move);
+        viewport?.removeEventListener("touchend", end);
+        viewport?.removeEventListener("touchcancel", end);
+      });
+      if (frame) window.cancelAnimationFrame(frame);
+      rails.forEach((rail) => rail.animation?.cancel());
+    };
+  }, []);
 
   return <main>
     <div className="home-particles" aria-hidden="true">{ambientParticles.map(([x, y, size, duration, delay], index) => <span key={index} style={{ "--particle-x": x, "--particle-y": y, "--particle-size": size, "--particle-duration": duration, "--particle-delay": delay } as React.CSSProperties} />)}</div>
@@ -134,7 +280,7 @@ export default function Home() {
       <a className="mobile-cta" href="#products">Explore <Icon name="arrow" /></a>
     </header>
 
-    <section className="hero" id="home">
+    <section className="hero" id="home" data-scroll-panel>
       <div className="hero-copy">
         <p className="eyebrow">Pure <i /> Aromatic <i /> Nutritious</p>
         <h1>The goodness<br />of <em>pure ghee.</em></h1>
@@ -145,52 +291,39 @@ export default function Home() {
       <div className="hero-art"><img className="hero-photo" src="/hero-lotus-ghee.webp" alt="Lotus Ghee jar with ghee, spoon, brass bowl, lotus flower, and full natural background" /><div className="hero-photo-badge"><i aria-hidden="true" />Pure &amp; traditional</div></div>
     </section>
 
-    <section className="benefit-strip" id="our-ghee" aria-label="Why Lotus Ghee">
+    <section className="benefit-strip" id="our-ghee" aria-label="Why Lotus Ghee" data-scroll-panel>
       {benefits.map((item) => <div className="benefit" key={item.icon}><span className={`benefit-icon ${item.tone}`}><Icon name={item.icon} /></span><p>{item.title}</p></div>)}
     </section>
 
     <section className="products-section" id="products">
-      <div className="section-heading"><p className="eyebrow pink">Our products</p><h2>Find your kind of <em>goodness.</em></h2><p>Made for every kitchen, every recipe, every day.</p></div>
-      <div className="product-grid">
-        {products.map((product, i) => <article className={`product-card ${product.tone}`} key={product.name}>
-          <div className="product-picture"><img className="product-image" src={product.image} alt={product.name} /><span className="product-index">0{i + 1}</span></div>
-          <div className="product-info"><div><h3>{product.name}</h3><p>{product.text}</p></div>{product.name === "Cow Ghee" || product.name === "Buffalo Ghee" ? <button ref={product.name === "Cow Ghee" ? cowGheeTriggerRef : buffaloGheeTriggerRef} type="button" onClick={() => { setSelectedGheeSize("500 ml"); setActiveGhee(product.name as GheeType); }} className="round-arrow" aria-label={`View ${product.name} quantities`}><Icon name="arrow" /></button> : <a href="#contact" className="round-arrow" aria-label={`Ask us about ${product.name}`}><Icon name="arrow" /></a>}</div>
-        </article>)}
+      <div className="section-heading" data-reveal><p className="eyebrow pink">Our products</p><h2>Find your kind of <em>goodness.</em></h2><p>Explore every pack, made for every kitchen and every day.</p></div>
+      <div className="ghee-categories">
+        {([
+          { name: "Cow Ghee" as const, eyebrow: "Traditional & aromatic", text: "Traditional, aromatic and rich in nutrition.", tone: "cow-ghee", sizes: cowGheeSizes },
+          { name: "Buffalo Ghee" as const, eyebrow: "Rich & creamy", text: "Thicker, creamier and full of flavour.", tone: "buffalo", sizes: buffaloGheeSizes },
+        ]).map((category, categoryIndex) => <section className={`ghee-category ${category.tone}`} key={category.name} aria-labelledby={`${category.tone}-ghee-title`} data-horizontal-section data-scroll-total={category.sizes.length}>
+          <div className="product-scroll-stage">
+            <div className="ghee-category-heading">
+              <div className="category-title-lockup"><span className="category-index">0{categoryIndex + 1}</span><div data-reveal style={{ "--pack-index": categoryIndex } as React.CSSProperties}><p className="eyebrow">{category.eyebrow}</p><h3 id={`${category.tone}-ghee-title`}>{category.name}</h3><p>{category.text}</p></div></div>
+              <div className="product-shelf-controls"><span className="category-count">{category.sizes.length} pack sizes</span><div className="product-shelf-position" aria-live="polite"><span data-scroll-current>01</span><i>/</i>{String(category.sizes.length).padStart(2, "0")}</div><button type="button" className="product-shelf-arrow previous" onClick={(event) => moveProductShelf(event.currentTarget, -1)} aria-label={`Previous ${category.name} packs`}><Icon name="arrow" /></button><button type="button" className="product-shelf-arrow" onClick={(event) => moveProductShelf(event.currentTarget, 1)} aria-label={`Next ${category.name} packs`}><Icon name="arrow" /></button></div>
+            </div>
+            <div className="product-scroll-viewport"><div className="pack-grid" data-horizontal-track>{category.sizes.map(({ size, image, packHeight }) => <article className="pack-card" key={size}>
+            <span className="pack-number">{size}</span>
+            <div className="pack-image"><img src={image} alt={`${size} Lotus ${category.name}`} style={{ "--pack-height": packHeight } as React.CSSProperties} loading="lazy" /><span className="pack-shine" aria-hidden="true" /></div>
+            <div className="pack-label"><strong>{category.name}</strong><a className="pack-enquiry-link" href={`https://wa.me/919959216999?text=${encodeURIComponent(`Hi Lotus Ghee, I’m interested in ${category.name} (${size}). Please share the price and availability.`)}`} target="_blank" rel="noopener noreferrer">Enquire on WhatsApp<GheeBowlMark /></a></div>
+            </article>)}</div></div>
+          </div>
+        </section>)}
       </div>
+      <article className="a2-feature" data-reveal><img src="/a2-ghee-ultrahd.webp" alt="Lotus A2 Cow Ghee" loading="lazy" /><div><p className="eyebrow pink">Also available</p><h3>A2 Cow Ghee</h3><p>From indigenous cows, crafted for everyday wellness.</p></div><a href={`https://wa.me/919959216999?text=${encodeURIComponent("Hi Lotus Ghee, I’m interested in A2 Cow Ghee. Please share the price and availability.")}`} target="_blank" rel="noopener noreferrer" className="round-arrow" aria-label="Enquire about A2 Cow Ghee on WhatsApp"><Icon name="arrow" /></a></article>
     </section>
 
-    {activeGhee && <div className="ghee-modal-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setActiveGhee(null); }}>
-      <section ref={modalRef} className={`ghee-modal${activeGhee === "Buffalo Ghee" ? " buffalo-ghee-modal" : ""}`} role="dialog" aria-modal="true" aria-labelledby="ghee-product-title" aria-describedby="ghee-product-description">
-        <button ref={closeButtonRef} type="button" className="ghee-modal-close" onClick={() => setActiveGhee(null)} aria-label={`Close ${activeGhee} quantities`}>×</button>
-        <div className="ghee-modal-content">
-          <div className="ghee-modal-heading">
-            <div><p className="eyebrow pink">Our available sizes</p><h2 id="ghee-product-title">{activeGhee}</h2><p id="ghee-product-description">{activeGhee === "Buffalo Ghee" ? "Thicker, creamier and full of flavour. Pick a pack for your kitchen." : "Traditional, aromatic and rich in nutrition. Pick a pack for your kitchen."}</p></div>
-            <span className="ghee-quality-pill"><span />{activeGhee === "Buffalo Ghee" ? "Rich & creamy" : "Pure & traditional"}</span>
-          </div>
-          <div className="ghee-modal-showcase">
-            <div className="ghee-selected-preview" aria-live="polite">
-              <span className="ghee-preview-caption">Your selected pack</span>
-              <img key={`${activeGhee}-${selectedGheeSize}`} src={selectedGheePack.image} alt={`${selectedGheeSize} Lotus ${activeGhee} pack`} style={{ "--pack-height": selectedGheePack.packHeight } as React.CSSProperties} />
-              <span className="ghee-preview-size">{selectedGheeSize}</span>
-            </div>
-            <div className="ghee-size-carousel">
-              <div className="ghee-carousel-heading"><span>Choose your pack</span><span>{String(selectedSizeIndex + 1).padStart(2, "0")} <i>/</i> {String(availableGheeSizes.length).padStart(2, "0")}</span></div>
-              <div className="ghee-size-grid" ref={sizeRailRef} aria-label={`${activeGhee} sizes`} tabIndex={0}>{availableGheeSizes.map(({ size, image, packHeight }, index) => <button type="button" key={size} style={{ "--tile-index": index, "--pack-height": packHeight } as React.CSSProperties} onClick={(event) => { setSelectedGheeSize(size); centerSizeCard(event.currentTarget); }} aria-pressed={selectedGheeSize === size} className={`ghee-size${selectedGheeSize === size ? " selected" : ""}`}><span className="ghee-card-selected-mark" aria-hidden="true">✓</span><span className="ghee-size-image"><img src={image} alt={`${size} Lotus ${activeGhee} pack`} /></span><span className="ghee-size-label">{size}<span className="ghee-size-check">{selectedGheeSize === size ? "Selected" : "Select"}</span></span></button>)}</div>
-              <div className="ghee-carousel-progress" role="progressbar" aria-label="Selected pack position" aria-valuemin={1} aria-valuemax={availableGheeSizes.length} aria-valuenow={selectedSizeIndex + 1}><span style={{ width: `${((selectedSizeIndex + 1) / availableGheeSizes.length) * 100}%` }} /></div>
-              <div className="ghee-carousel-controls"><span>Swipe to explore all {availableGheeSizes.length} pack sizes</span></div>
-            </div>
-          </div>
-          <div className="ghee-modal-footer"><div className="ghee-selection-summary"><span className="ghee-selection-icon"><Icon name="leaf" /></span><span><small>Your selection</small><strong>{selectedGheeSize} <i>·</i> {activeGhee}</strong></span></div><a className="ghee-enquire-button" href={`https://wa.me/919959216999?text=${encodeURIComponent(`Hi Lotus Ghee, I’m interested in ${activeGhee} (${selectedGheeSize}). Please share the price and availability.`)}`} target="_blank" rel="noopener noreferrer">Enquire on WhatsApp</a></div>
-        </div>
-      </section>
-    </div>}
-
-    <section className="origin-section" id="about-us">
+    <section className="origin-section" id="about-us" data-scroll-panel>
       <div className="origin-art"><img className="origin-photo" src="/natural-origin-cows.webp" alt="A cow and calf standing together in a green pasture" /><div className="origin-stamp"><img src="/logo.png" alt="" /><span>GOODNESS<br />FROM THE<br />GROUND UP</span></div></div>
       <div className="origin-copy"><p className="eyebrow green">Natural origin</p><h2>From healthy cows<br />to your <em>home.</em></h2><p>We believe the best ghee begins with care. From well-cared-for cows to a time-honoured process, every jar brings natural richness and consistent quality to your table.</p><a href="#commitment" className="text-link">Our promise to you <Icon name="arrow" /></a></div>
     </section>
 
-    <section className="commitment-section" id="commitment">
+    <section className="commitment-section" id="commitment" data-scroll-panel>
       <div className="commitment-copy"><p className="eyebrow pink">Our commitment</p><h2>Purity you can <em>trust.</em></h2><p>Good food starts with good choices. We keep our process simple and our promise clear.</p></div>
       <div className="commitment-list">
         <div><span className="commit-icon"><Icon name="leaf" /></span><p>Quality<br /><strong>sourcing</strong></p></div>
