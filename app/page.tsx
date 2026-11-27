@@ -227,7 +227,17 @@ export default function Home() {
     let lenis: Lenis | null = null;
     const raf = (t: number) => lenis?.raf(t * 1000);
     if (!reduced) {
-      lenis = new Lenis({ lerp: 0.09 });
+      // Buttery wheel + trackpad scrolling, and the same glide on touch screens.
+      lenis = new Lenis({
+        lerp: 0.075,            // lower = longer, silkier glide
+        smoothWheel: true,
+        wheelMultiplier: 0.95,
+        syncTouch: true,        // smooth touch scrolling too, with natural momentum
+        syncTouchLerp: 0.085,
+        touchInertiaExponent: 1.6,
+        touchMultiplier: 1,
+        anchors: true,          // in-page #links glide instead of jumping
+      });
       lenisRef.current = lenis;
       lenis.on("scroll", ScrollTrigger.update);
       gsap.ticker.add(raf);
@@ -918,7 +928,7 @@ export default function Home() {
               })}
             </div>
             {/* Phones: one row you swipe through, card by card. */}
-            <div className="reviews-swipe" aria-label="Customer reviews, swipe to see more" tabIndex={0}
+            <div className="reviews-swipe" data-lenis-prevent aria-label="Customer reviews, swipe to see more" tabIndex={0}
               onScroll={(e) => {
                 const el = e.currentTarget, card = el.firstElementChild as HTMLElement | null;
                 if (!card) return;

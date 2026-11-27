@@ -33,6 +33,8 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
+/* Fallback when the smooth-scroll engine isn't running (e.g. before scripts load): native smooth anchor jumps. */
+@media (prefers-reduced-motion: no-preference) { html:not(.lenis) { scroll-behavior: smooth; } }
 
 /* Golden scrollbar: a polished gold thumb on a parchment track. */
 /* Firefox only: Chrome/Edge drop the gradient ::-webkit-scrollbar styles below whenever scrollbar-color is set. */
