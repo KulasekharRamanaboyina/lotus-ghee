@@ -82,6 +82,8 @@ html.menu-open { overflow: hidden; }
   60% { transform: translate(-2%, -1%); } 80% { transform: translate(3%, 3%); } 100% { transform: translate(0, 0); }
 }
 
+@property --sweep { syntax: "<number>"; inherits: true; initial-value: 0; }
+
 /* ─── shared bits ─── */
 .ico { width: 1.15em; height: 1.15em; flex: none; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .ico .fill { fill: currentColor; stroke: none; }
@@ -812,12 +814,49 @@ html.is-ready .site-header.is-tucked { transform: translateY(-100%); transition-
   .site-header { grid-template-columns: 1fr auto; height: 70px; }
   .site-header.is-scrolled { height: 62px; }
   .nav, .header-cta { display: none; }
-  .menu-btn { display: grid; gap: 7px; justify-items: end; width: 44px; height: 44px; place-content: center; position: relative; z-index: 60; }
-  .menu-btn i { display: block; width: 28px; height: 1.5px; background: currentColor; transition: transform 0.6s var(--ease), width 0.4s; }
-  .menu-btn i + i { width: 18px; }
+  /* Menu toggler: a gold-ringed button; three staggered lines that fold into an X. */
+  .menu-btn {
+    position: relative; z-index: 60; display: inline-flex; align-items: center; gap: 12px;
+    height: 46px; padding: 0; color: var(--ink); touch-action: manipulation;
+  }
+  .menu-icon {
+    position: relative; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%;
+    background: rgba(243, 233, 212, 0.75); backdrop-filter: blur(6px);
+    box-shadow: inset 0 0 0 1px var(--gold-line), 0 6px 16px -8px rgba(90, 50, 10, 0.45);
+    transition: background 0.5s var(--ease), box-shadow 0.5s var(--ease), transform 0.5s var(--ease);
+  }
+  /* a gold ring that sweeps round the icon on open */
+  .menu-icon::before {
+    content: ""; position: absolute; inset: -1px; border-radius: 50%; padding: 1.5px;
+    background: conic-gradient(from -90deg, #fbe08a, var(--gold) calc(var(--sweep, 0) * 1%), transparent 0);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    transition: --sweep 0.7s var(--ease);
+  }
+  .menu-icon i {
+    position: absolute; left: 50%; top: 50%; height: 1.6px; border-radius: 2px; background: currentColor;
+    transform-origin: 50% 50%;
+    transition: transform 0.55s var(--ease), width 0.45s var(--ease), opacity 0.3s;
+  }
+  .menu-icon i:nth-child(1) { width: 18px; margin-left: -9px; transform: translateY(-6px); }
+  .menu-icon i:nth-child(2) { width: 12px; margin-left: -3px; transform: translateY(0); }
+  .menu-icon i:nth-child(3) { width: 16px; margin-left: -7px; transform: translateY(6px); }
+  .menu-btn:hover .menu-icon i:nth-child(2), .menu-btn:focus-visible .menu-icon i:nth-child(2) { width: 18px; margin-left: -9px; }
+  .menu-btn:active .menu-icon { transform: scale(0.92); }
+  .menu-btn:focus-visible { outline: none; }
+  .menu-btn:focus-visible .menu-icon { box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--kumkum); }
+
+  /* the word: Menu / Close rolls over (tablets only) */
+  .menu-word { display: none; position: relative; overflow: hidden; height: 1.2em; font: 600 11px/1.2 var(--sans); letter-spacing: 0.24em; text-transform: uppercase; }
+  .menu-word span { display: block; transition: transform 0.6s var(--ease); }
+
+  /* open: lines fold to an X, ring sweeps gold, colours flip for the dark menu */
   .menu-btn.is-open { color: var(--paper); }
-  .menu-btn.is-open i { width: 26px; transform: translateY(4.25px) rotate(45deg); }
-  .menu-btn.is-open i + i { transform: translateY(-4.25px) rotate(-45deg); }
+  .menu-btn.is-open .menu-icon { --sweep: 100; background: rgba(241, 194, 50, 0.12); box-shadow: inset 0 0 0 1px rgba(241, 194, 50, 0.3); }
+  .menu-btn.is-open .menu-icon i:nth-child(1) { width: 20px; margin-left: -10px; transform: rotate(45deg); }
+  .menu-btn.is-open .menu-icon i:nth-child(2) { width: 0; margin-left: 0; opacity: 0; }
+  .menu-btn.is-open .menu-icon i:nth-child(3) { width: 20px; margin-left: -10px; transform: rotate(-45deg); }
+  .menu-btn.is-open .menu-word span { transform: translateY(-100%); }
   html.menu-open .brand { color: var(--paper); position: relative; z-index: 60; }
   html.menu-open .site-header { background: transparent; box-shadow: none; transform: none; backdrop-filter: none; }
   html.menu-open .brand-word i { color: var(--ghee); }
@@ -892,6 +931,7 @@ html.is-ready .site-header.is-tucked { transform: translateY(-100%); transition-
 
 /* ─── Tablet (600–959px): side-by-side hero, two-column sections ─── */
 @media (min-width: 600px) and (max-width: 959px) {
+  .menu-word { display: block; }
   /* Hero: copy left, the filled jars settle on the right — text scaled down to make room. */
   .hero { grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); column-gap: 20px; padding: 96px var(--pad) 26px; }
   .hero { align-items: center; }

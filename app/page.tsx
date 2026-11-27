@@ -634,6 +634,14 @@ export default function Home() {
     return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); cancelAnimationFrame(raf); };
   }, []);
 
+  /* Escape closes the mobile menu. */
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [menuOpen]);
+
   /* Lock scrolling while the mobile menu is open. */
   useEffect(() => {
     if (menuOpen) lenisRef.current?.stop(); else lenisRef.current?.start();
@@ -673,8 +681,10 @@ export default function Home() {
           ))}
         </nav>
         <a className="header-cta" href={wa("Hi Lotus Ghee, I’d like to know more about your ghee.")} target="_blank" rel="noopener noreferrer"><WaIcon /> Order on WhatsApp</a>
-        <button type="button" className={`menu-btn ${menuOpen ? "is-open" : ""}`} aria-expanded={menuOpen} aria-controls="mobile-menu" onClick={() => setMenuOpen((v) => !v)}>
-          <span className="sr-only">{menuOpen ? "Close menu" : "Open menu"}</span><i /><i />
+        <button type="button" className={`menu-btn ${menuOpen ? "is-open" : ""}`} aria-expanded={menuOpen} aria-controls="mobile-menu" aria-label={menuOpen ? "Close menu" : "Open menu"} onClick={() => setMenuOpen((v) => !v)}>
+          {/* tablet: a word beside the icon that flips between Menu and Close */}
+          <span className="menu-word" aria-hidden="true"><span>Menu</span><span>Close</span></span>
+          <span className="menu-icon" aria-hidden="true"><i /><i /><i /></span>
         </button>
       </header>
 
@@ -1008,7 +1018,6 @@ export default function Home() {
         <div className="footer-base">
           <span>© {new Date().getFullYear()} Lotus Ghee</span>
           <span lang="te">స్వచ్ఛమైన నెయ్యి</span>
-          <a href="#home" onClick={(e) => { e.preventDefault(); go("home"); }}>Back to top ↑</a>
         </div>
       </footer>
 
