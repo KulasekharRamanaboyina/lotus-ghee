@@ -227,15 +227,13 @@ export default function Home() {
     let lenis: Lenis | null = null;
     const raf = (t: number) => lenis?.raf(t * 1000);
     if (!reduced) {
-      // Buttery wheel + trackpad scrolling, and the same glide on touch screens.
+      // Buttery wheel + trackpad scrolling. Touch screens keep the phone's own native momentum
+      // scrolling (fast and smooth); taking over touch made phones feel slow and heavy.
       lenis = new Lenis({
-        lerp: 0.075,            // lower = longer, silkier glide
+        lerp: 0.075,            // lower = longer, silkier glide (wheel / trackpad)
         smoothWheel: true,
         wheelMultiplier: 0.95,
-        syncTouch: true,        // smooth touch scrolling too, with natural momentum
-        syncTouchLerp: 0.085,
-        touchInertiaExponent: 1.6,
-        touchMultiplier: 1,
+        syncTouch: false,
         anchors: true,          // in-page #links glide instead of jumping
       });
       lenisRef.current = lenis;
