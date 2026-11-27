@@ -171,41 +171,12 @@ const DUST: Array<[number, number, number, number, number]> = [
   [46, 92, 2, 4, 18], [57, 28, 3, 9, 15], [63, 78, 2, 2, 20], [71, 46, 4, 5, 16], [78, 12, 2, 7, 18],
   [84, 66, 3, 0, 17], [91, 38, 2, 10, 19], [95, 84, 3, 3, 15], [4, 50, 2, 11, 18],
 ];
-/** Transparent cut-out of a hand reaching down from above, fingertips at the bottom edge. */
-const HERO_HAND = "/hero/hand-lid.webp";
 
-/**
- * The hero jar, built from the real product photo in layers: a clear, see-through
- * "empty" body with the printed label in full colour, the full-colour body revealed from the bottom up (masked to the jar's
- * own silhouette), and the lid cut from the same photo. Resting markup is the
- * finished jar, so reduced-motion and no-JS visitors see it full and lidded.
- */
+/** The hero cow-ghee jar: the full product photo, with a band of light that sweeps the glass on landing. */
 function GheeJar() {
   return (
-    <div className="jar" role="img" aria-label="A jar of Lotus cow ghee being filled">
-      <div className="pour" aria-hidden="true"><span className="pour-fall"><span className="pour-body" /></span></div>
-      <span className="pour-drop" aria-hidden="true" />
-      <img className="jar-ghost" src={HERO_JAR} alt="" width={1122} height={1402} fetchPriority="high" />
-      {/* Keeps only the photo's near-white reflections (luminance > ~88%) as white; the rest goes transparent. */}
-      <svg className="jar-filters" width="0" height="0" aria-hidden="true" focusable="false">
-        <filter id="jar-gloss-filter" colorInterpolationFilters="sRGB">
-          <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  1.77 5.96 0.6 0 -7.33" />
-        </filter>
-      </svg>
-      <img className="jar-gloss" src={HERO_JAR} alt="" aria-hidden="true" />
-      <img className="jar-label" src={HERO_JAR} alt="" aria-hidden="true" />
-      <div className="jar-mask" aria-hidden="true">
-        <div className="jar-level">
-          <img className="jar-full" src={HERO_JAR} alt="" />
-          <span className="jar-surface"><i /><i /></span>
-        </div>
-      </div>
-      {/* The lid travels in with a hand, which lets go once it is screwed on. */}
-      <div className="lid-rig" aria-hidden="true">
-        <img className="jar-lid" src={HERO_JAR} alt="" />
-        <img className="jar-hand" src={HERO_HAND} alt="" />
-      </div>
-      {/* One pass of light across the glass once it is sealed. */}
+    <div className="jar" role="img" aria-label="A glass jar of Lotus cow ghee">
+      <img src={HERO_JAR} alt="" width={1122} height={1402} fetchPriority="high" />
       <span className="jar-sheen" aria-hidden="true"><i /></span>
     </div>
   );
@@ -262,56 +233,73 @@ export default function Home() {
           },
         });
 
-        /* Hero intro — held until the preloader lifts: the empty jar settles in the centre. */
+        /* Hero intro — held until the preloader lifts: both jars drop onto their brass stands. */
+        const dropFrom = () => ({ yPercent: -175, rotation: gsap.utils.random(-9, 9), scaleX: 1, scaleY: 1, autoAlpha: 0, filter: "blur(10px)", transformOrigin: "50% 100%" });
+        const squash = { keyframes: [{ scaleY: 0.9, scaleX: 1.06, duration: 0.1, ease: "power2.out" }, { scaleY: 1, scaleX: 1, duration: 0.7, ease: "elastic.out(1, 0.42)" }] };
         const intro = gsap.timeline({ paused: true, defaults: { ease: "expo.out" } })
-          .fromTo(".jar", { yPercent: 16, rotation: -4, autoAlpha: 0 }, { yPercent: 0, rotation: 0, autoAlpha: 1, duration: 1.8 })
-          .from(".plinth", { scaleX: 0.4, opacity: 0, duration: 1.6 }, 0.15)
           .from(".hero-frame", { opacity: 0, scale: 1.03, duration: 2 }, 0)
-          .from(".jar-glow", { scale: 0.3, opacity: 0, duration: 2 }, 0.1)
+          .from(".jar-glow", { scale: 0.3, opacity: 0, duration: 1.6 }, 0)
           .from(".hero-te", { yPercent: 30, opacity: 0, duration: 2 }, 0.2)
-          .from(".scroll-cue", { y: 20, opacity: 0, duration: 1.1 }, 0.6);
+          .from(".plinth", { scaleX: 0.35, opacity: 0, duration: 0.7, ease: "power3.in", stagger: -0.2 }, 0.3)
+          // the fall: accelerates in with motion blur…
+          .fromTo(".jar-buddy img", dropFrom(), { yPercent: 0, rotation: 0, filter: "blur(0px)", duration: 0.62, ease: "power3.in", clearProps: "filter" }, 0.25)
+          .to(".jar-buddy img", { autoAlpha: 1, duration: 0.12, ease: "none", overwrite: false }, 0.25)
+          .fromTo(".jar", dropFrom(), { yPercent: 0, rotation: 0, filter: "blur(0px)", duration: 0.62, ease: "power3.in", clearProps: "filter" }, 0.45)
+          .to(".jar", { autoAlpha: 1, duration: 0.12, ease: "none", overwrite: false }, 0.45)
+          // …squashes on impact and springs back
+          .to(".jar-buddy img", squash, 0.87)
+          .to(".jar", squash, 1.07)
+          // the stands take the weight, the glow blooms, light sweeps across the glass
+          .to(".plinth", { keyframes: [{ scaleX: 1.12, duration: 0.1 }, { scaleX: 1, duration: 0.5, ease: "elastic.out(1, 0.5)" }], stagger: -0.2 }, 0.87)
+          .to(".jar-glow", { scale: 1.12, duration: 0.45, ease: "power2.out", yoyo: true, repeat: 1 }, 1.07)
+          .fromTo(".jar-sheen i", { xPercent: 0 }, { xPercent: 200, duration: 1.1, ease: "power2.inOut" }, 1.4)
+          .from(".hero-word .line-in", { yPercent: 115, rotate: 3, duration: 1.2, stagger: 0.12 }, 1.05)
+          .from(".scroll-cue", { y: 20, opacity: 0, duration: 1.1 }, 1.3);
         const play = () => intro.play();
         if (window.__lotusReady) play(); else window.addEventListener("lotus:ready", play, { once: true });
 
-        /* Hero: pinned. Pour → fill → lid & label → the jar steps right and the story arrives. */
+        /* Hero: pinned. The pair of jars lands at the foot of the screen, then glides right as the story arrives. */
         const hero = document.querySelector<HTMLElement>(".hero");
         const art = document.querySelector<HTMLElement>(".hero-art");
-        const fill = document.querySelector<HTMLElement>(".jar-level");
-        if (hero && art && fill && !heroDone) {
-          const EMPTY = 100, FULL = 14.5; // fill line, as % from the top of the photo (14.5% = under the lid)
-          // Offsets from the jar's resting place (right column) to the centre of the screen.
-          const dx = () => { const h = hero.getBoundingClientRect(), a = art.getBoundingClientRect(); return h.left + h.width / 2 - (a.left + a.width / 2); };
-          const dy = () => { const h = hero.getBoundingClientRect(), a = art.getBoundingClientRect(); return h.height / 2 - (a.top - h.top + a.height / 2); };
-          const s0 = () => gsap.utils.clamp(0.9, 2.6, (hero.offsetHeight * (phone ? 0.48 : 0.6)) / art.offsetHeight);
-          const MOVE_AT = 9.2;
+        const buddy = document.querySelector<HTMLElement>(".jar-buddy");
+        if (hero && art && !heroDone) {
+          // The pair's visual box inside .hero-art (the buffalo jar hangs out to the left). Offsets ignore
+          // transforms, so these stay right while the group is moved and scaled.
+          const groupL = () => Math.min(0, buddy?.offsetLeft ?? 0);
+          const groupMid = () => (groupL() + art.offsetWidth) / 2;
+          const dx = () => hero.clientWidth / 2 - (art.offsetLeft + groupMid());
+          const s0 = () => Math.min(
+            gsap.utils.clamp(0.9, 2.4, (hero.clientHeight * (phone ? 0.42 : 0.56)) / art.offsetHeight),
+            // phones: the words sit above, so the jars may fill the width; elsewhere leave room beside them
+            (hero.clientWidth * (phone ? 0.9 : 0.5)) / (art.offsetWidth - groupL()),
+          );
+          // vertical: the (scaled) pair stands on the bottom edge of the screen
+          const floor = () => hero.clientHeight - (phone ? 92 : Math.max(28, hero.clientHeight * 0.05)); // phones: clear the WhatsApp button
+          const dy = () => floor() - (art.offsetHeight * s0()) / 2 - (art.offsetTop + art.offsetHeight / 2);
+          const origin = () => `${groupMid()}px 50%`;
+          // Where the landed pair sits, for the words beside it.
+          const placeWords = () => {
+            const s = s0();
+            gsap.set(hero, {
+              "--jars-mid": `${floor() - (art.offsetHeight * s) / 2}px`,
+              "--jars-half": `${((art.offsetWidth - groupL()) * s) / 2}px`,
+              "--jars-top": `${floor() - art.offsetHeight * s}px`,
+            });
+          };
+          placeWords();
 
-          // No hand photo yet (or it failed to load)? The lid simply drops on by itself.
-          const hand = document.querySelector<HTMLImageElement>(".jar-hand");
-          const noHand = () => hand?.classList.add("is-missing");
-          if (hand && hand.complete && !hand.naturalWidth) noHand();
-          hand?.addEventListener("error", noHand, { once: true });
-
-          gsap.set(".pour", { autoAlpha: 1 });
           const factEls = gsap.utils.toArray<HTMLElement>(".hero-facts dt");
           const factEnds = factEls.map((dt) => Number(dt.textContent) || 0);
           const facts = { v: 1 };
-          const stepEls = gsap.utils.toArray<HTMLElement>(".hero-steps li");
-          let stepOn = 0;
           const tl = gsap.timeline({
             defaults: { ease: "none" },
-            // light up the step the jar is on: pouring → filling → sealing
-            onUpdate: () => {
-              const t = tl.time(), i = t < 1.6 ? 0 : t < 6.9 ? 1 : 2;
-              if (i !== stepOn) { stepOn = i; stepEls.forEach((li, j) => li.classList.toggle("is-on", j === i)); }
-            },
             scrollTrigger: {
-              trigger: hero, start: "top top", end: phone ? "+=210%" : "+=290%",
+              trigger: hero, start: "top top", end: phone ? "+=110%" : "+=150%",
               pin: true, scrub: 1, anticipatePin: 1, invalidateOnRefresh: true,
-              // Before the jar has moved, re-centre it for the new viewport.
-              onRefresh: () => { if (tl.time() < MOVE_AT) gsap.set(".jar-wrap", { x: dx(), y: dy(), scale: s0() }); },
               // Past the end: lock in the finished hero and drop the pin, so scrolling back up
-              // shows the text and full jar instead of emptying the jar again.
+              // shows the finished layout instead of replaying the move.
               onLeave: () => finishHero(true),
+              onRefresh: placeWords,
             },
           });
           // Lock in the finished hero and drop its pin. When the visitor scrolled past it, keep them at the
@@ -335,43 +323,26 @@ export default function Home() {
           cleanups.push(() => { finishHeroRef.current = null; });
 
           tl
-            .fromTo(".scroll-cue", { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.6 }, 0)
-            .fromTo(".hero-te", { xPercent: 0 }, { xPercent: 8, duration: 11.4 }, 0)
-            // 1 — the pour begins
-            .fromTo(".pour-fall", { scaleY: 0, transformOrigin: "50% 0%" }, { scaleY: 1, duration: 0.9, ease: "power2.in" }, 0.2)
-            .fromTo(".jar-surface", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.0)
-            // 2 — the jar fills: the level rises, the photo inside counter-moves so it stays put
-            .fromTo(fill, { y: 0, yPercent: EMPTY }, { y: 0, yPercent: FULL, duration: 5.6, ease: "power1.inOut" }, 1.0)
-            .fromTo(".jar-full", { y: 0, yPercent: -EMPTY }, { y: 0, yPercent: -FULL, duration: 5.6, ease: "power1.inOut" }, 1.0)
-            .fromTo(".jar-glow", { scale: 0.55, opacity: 0.35 }, { scale: 1.08, opacity: 1, duration: 5.6, ease: "power1.inOut" }, 1.0)
-            // 3 — the stream's tail drops in, a last drop follows
-            .fromTo(".pour-body", { scaleY: 1, transformOrigin: "50% 100%" }, { scaleY: 0, duration: 0.9, ease: "power2.in" }, 6.4)
-            .fromTo(".jar-surface", { opacity: 1 }, { opacity: 0, duration: 0.5, immediateRender: false }, 6.9)
-            .fromTo(".pour-drop", { yPercent: -600, opacity: 1 }, { yPercent: 300, opacity: 1, duration: 0.5, ease: "power2.in", immediateRender: false }, 6.9)
-            .to(".pour-drop", { opacity: 0, duration: 0.08 }, 7.4)
-            // 4 — the lid screws on
-            // 4 — a hand lowers the lid on, gives it a twist, lets go and lifts away
-            .fromTo(".lid-rig", { y: 0, yPercent: -55, rotation: -5, opacity: 0, transformOrigin: "50% 8%" }, { y: 0, yPercent: 0, rotation: 0, opacity: 1, duration: 1.1, ease: "power2.out" }, 6.9)
-            .fromTo(".jar-hand", { rotation: 0, transformOrigin: "50% 100%" }, { rotation: -7, duration: 0.35, ease: "sine.inOut" }, 8.0)
-            .to(".jar-hand", { rotation: 4, duration: 0.35, ease: "sine.inOut" }, 8.35)
-            .fromTo(".jar-lid", { rotation: 0, transformOrigin: "50% 8%" }, { rotation: -1.5, duration: 0.35, ease: "sine.inOut" }, 8.0)
-            .to(".jar-lid", { rotation: 0, duration: 0.35, ease: "sine.inOut" }, 8.35)
-            .fromTo(".jar-hand", { y: 0, yPercent: 0, opacity: 1 }, { y: 0, yPercent: -90, opacity: 0, duration: 0.8, ease: "power2.in" }, 8.75)
-            .fromTo(".jar-sheen i", { xPercent: 0 }, { xPercent: 200, duration: 1, ease: "power2.inOut" }, 8.6)
-            .fromTo(".hero-steps", { autoAlpha: 1, x: 0 }, { autoAlpha: 0, x: -40, duration: 0.7, ease: "power2.in" }, MOVE_AT - 0.3)
-            .fromTo(".hero-steps", { "--sp": 0 }, { "--sp": 1, duration: 7.6 }, 0.2)
-            // 5 — the jar steps aside, the story comes in from the left
-            .fromTo(".jar-wrap", { x: dx, y: dy, scale: s0 }, { x: 0, y: 0, scale: 1, duration: 1.8, ease: "power3.inOut" }, MOVE_AT)
-            .fromTo(".jar-wrap", { rotation: 0 }, { rotation: 5, duration: 0.9, ease: "power2.out" }, MOVE_AT)
-            .to(".jar-wrap", { rotation: 0, duration: 0.9, ease: "power2.inOut" }, MOVE_AT + 0.9)
-            .fromTo(".hero-copy .line-in", { yPercent: 115, rotate: 3 }, { yPercent: 0, rotate: 0, duration: 1.1, stagger: 0.14, ease: "power3.out" }, 9.8)
-            .fromTo(".hero-copy .fade-up, .hero-facts", { y: 34, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1, stagger: 0.12, ease: "power2.out" }, 9.8)
+            .fromTo(".scroll-cue", { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.3 }, 0)
+            .fromTo(".hero-words", { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.5, ease: "power1.in" }, 0)
+            .fromTo(".hero-word.is-l", { x: 0 }, { x: phone ? 0 : -120, y: phone ? -30 : 0, duration: 0.6, ease: "power2.in" }, 0)
+            .fromTo(".hero-word.is-r", { x: 0 }, { x: phone ? 0 : 120, y: phone ? -30 : 0, duration: 0.6, ease: "power2.in" }, 0)
+            .fromTo(".plinth", { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.3 }, 1.45)
+            .fromTo(".stand", { scaleX: 0.2, scaleY: 0, autoAlpha: 0, transformOrigin: "50% 30%" }, { scaleX: 1, scaleY: 1, autoAlpha: 1, duration: 0.6, ease: "back.out(2.2)", stagger: 0.12 }, 1.45)
+            .fromTo(".hero-te", { xPercent: 0 }, { xPercent: 8, duration: 2.6 }, 0)
+            // the pair glides from centre stage to the right, easing down to its resting size
+            .fromTo(art, { x: dx, y: dy, scale: s0, transformOrigin: origin }, { x: 0, y: 0, scale: 1, duration: 1.6, ease: "power3.inOut" }, 0)
+            // the warm glow starts behind the jars at the foot of the screen and rises with them
+            .fromTo(".jar-glow", { y: () => floor() - (art.offsetHeight * s0()) / 2 - hero.clientHeight / 2 }, { y: 0, duration: 1.6, ease: "power3.inOut" }, 0)
+            .fromTo(art, { rotation: 0 }, { rotation: 3, duration: 0.8, ease: "power2.out" }, 0)
+            .to(art, { rotation: 0, duration: 0.8, ease: "power2.inOut" }, 0.8)
+            // the story comes in from the left
+            .fromTo(".hero-copy .line-in", { yPercent: 115, rotate: 3 }, { yPercent: 0, rotate: 0, duration: 0.8, stagger: 0.1, ease: "power3.out" }, 0.75)
+            .fromTo(".hero-copy .fade-up, .hero-facts", { y: 34, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.7, stagger: 0.08, ease: "power2.out" }, 0.8)
             // the stats count up as they arrive (03 kinds, 07 sizes, 00 preservatives)
-            .fromTo(facts, { v: 0 }, { v: 1, duration: 1.2, ease: "power2.out", onUpdate: () => factEls.forEach((dt, i) => { dt.textContent = String(Math.round(factEnds[i] * facts.v)).padStart(2, "0"); }) }, 9.9)
-            // 6 — the buffalo jar slides out from behind and takes its place beside the cow jar
-            .fromTo(".jar-buddy", { x: 0, xPercent: 62, autoAlpha: 0 }, { x: 0, xPercent: 0, autoAlpha: 1, duration: 1.3, ease: "power3.out" }, 10.0)
-            .fromTo(".hero-stamp", { scale: 0.4, rotation: -120, autoAlpha: 0 }, { scale: 1, rotation: 0, autoAlpha: 1, duration: 1.1, ease: "back.out(1.6)" }, 10.4)
-            .to({}, { duration: 0.6 });
+            .fromTo(facts, { v: 0 }, { v: 1, duration: 0.9, ease: "power2.out", onUpdate: () => factEls.forEach((dt, i) => { dt.textContent = String(Math.round(factEnds[i] * facts.v)).padStart(2, "0"); }) }, 1.1)
+            .fromTo(".hero-stamp", { scale: 0.4, rotation: -120, autoAlpha: 0 }, { scale: 1, rotation: 0, autoAlpha: 1, duration: 0.8, ease: "back.out(1.6)" }, 1.4)
+            .to({}, { duration: 0.4 });
         }
 
         /* Ribbon: a marquee that leans into your scroll speed. */
@@ -710,13 +681,11 @@ export default function Home() {
           </div>
           <div className="hero-frame" aria-hidden="true"><i /><i /><i /><i /></div>
 
-          {/* While the jar fills: where you are in the making (fills with the scroll, gone once the story arrives). */}
-          <ol className="hero-steps" aria-hidden="true">
-            <span className="hero-steps-rail"><i className="hero-steps-fill" /></span>
-            <li className="is-on"><b>01</b>Poured warm</li>
-            <li><b>02</b>Filled to the brim</li>
-            <li><b>03</b>Sealed with care</li>
-          </ol>
+          {/* Big words flanking the jars as they land; they part and fade once you scroll. */}
+          <p className="hero-words" aria-hidden="true">
+            <span className="hero-word is-l"><Line>Pure</Line></span>
+            <span className="hero-word is-r"><Line><em>Ghee</em></Line></span>
+          </p>
 
           <div className="hero-copy">
             <p className="kicker fade-up"><LotusGlyph /> Pure <i>·</i> Aromatic <i>·</i> Nutritious</p>
@@ -735,10 +704,12 @@ export default function Home() {
           <figure className="hero-art">
             <div className="jar-buddy">
               <img src={HERO_JAR_BUFFALO} alt="A glass jar of Lotus buffalo ghee" width={1122} height={1402} />
+              <span className="stand" aria-hidden="true" />
               <span className="plinth" aria-hidden="true" />
             </div>
             <div className="jar-wrap">
               <GheeJar />
+              <span className="stand" aria-hidden="true" />
               <span className="plinth" aria-hidden="true" />
             </div>
             <div className="hero-stamp" aria-hidden="true">
@@ -755,7 +726,7 @@ export default function Home() {
             <div><dt>07</dt><dd>Pack sizes</dd></div>
             <div><dt>00</dt><dd>Preservatives</dd></div>
           </dl>
-          <span className="scroll-cue" aria-hidden="true"><i />Scroll to pour</span>
+          <span className="scroll-cue" aria-hidden="true"><i />Scroll</span>
         </section>
 
         {/* ——— Ribbon ——— */}

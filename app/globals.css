@@ -269,17 +269,6 @@ html.is-ready .site-header.is-tucked { transform: translateY(-100%); transition-
     radial-gradient(ellipse 110% 95% at 50% 45%, rgba(120, 84, 30, 0) 58%, rgba(120, 84, 30, 0.16)),
     var(--paper);
 }
-/* The making, step by step, on a gold rail at the left while the jar fills (hidden once the story arrives). */
-.hero-steps {
-  position: absolute; z-index: 2; left: calc(var(--pad) + 8px); top: 50%; translate: 0 -50%;
-  display: grid; gap: 34px; padding-left: 30px; visibility: hidden; list-style: none;
-}
-.hero-steps-rail { position: absolute; left: 0; top: 4px; bottom: 4px; width: 2px; border-radius: 2px; background: var(--gold-line); overflow: hidden; }
-.hero-steps-fill { position: absolute; inset: 0; transform-origin: 50% 0; transform: scaleY(var(--sp, 0)); background: linear-gradient(180deg, #fbe08a, var(--gold)); box-shadow: 0 0 8px rgba(241, 194, 50, 0.8); }
-.hero-steps li { display: grid; gap: 8px; font: italic 400 clamp(22px, 1.9vw, 30px)/1.1 var(--serif); color: var(--ink-3); opacity: 0.5; transition: opacity 0.6s, color 0.6s, transform 0.7s var(--ease); }
-.hero-steps li b { font: 600 11px/1 var(--sans); font-style: normal; letter-spacing: 0.26em; color: var(--gold); }
-.hero-steps li.is-on { opacity: 1; color: var(--ink); transform: translateX(8px); }
-
 /* Thin gold frame with diamond corners, like the label on a fine box. */
 .hero-frame { position: absolute; inset: 88px 22px 22px; z-index: 0; border: 1px solid var(--gold-line); pointer-events: none; }
 .hero-frame::before { content: ""; position: absolute; inset: 5px; border: 1px solid rgba(184, 134, 43, 0.16); }
@@ -322,82 +311,42 @@ html.is-ready .site-header.is-tucked { transform: translateY(-100%); transition-
 }
 .jar-wrap { position: relative; z-index: 1; transform-origin: 50% 50%; will-change: transform; }
 
-/* Polished brass display stand the jar sits on (side band + lit top face + contact shadow). */
-.plinth {
+/* Big words flanking the landed jars (hidden in the resting state; JS places and shows them). */
+.hero-words {
+  position: absolute; inset: 0; z-index: 0; margin: 0; pointer-events: none; visibility: hidden;
+  font: 400 clamp(56px, 8.4vw, 150px)/1 var(--display); letter-spacing: -0.035em; color: var(--ink);
+}
+.hero-word { position: absolute; top: var(--jars-mid, 70%); translate: 0 -50%; }
+.hero-word.is-l { right: calc(50% + var(--jars-half, 18vw) + 0.25em); }
+.hero-word.is-r { left: calc(50% + var(--jars-half, 18vw) + 0.25em); }
+.hero-word em { color: var(--kumkum); }
+
+/* Polished brass stand: pops up under each jar once the pair settles on the right. */
+.stand {
   position: absolute; z-index: 0; left: 50%; bottom: -7%; width: 106%; aspect-ratio: 6; translate: -50% 0;
   border-radius: 50%; background: linear-gradient(180deg, #c99a36 0%, #8d6214 70%, #5e3f08 100%);
 }
-.plinth::before {
+.stand::before {
   content: ""; position: absolute; left: 0; right: 0; top: 0; height: 78%; border-radius: 50%;
   background: radial-gradient(ellipse 58% 52% at 50% 42%, #fff4cf 0%, #ebc96c 34%, #c9962e 70%, #a2761c 100%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65), inset 0 -2px 4px rgba(90, 55, 5, 0.35);
 }
-.plinth::after {
+.stand::after {
   content: ""; position: absolute; z-index: -1; left: 4%; right: 4%; top: 62%; height: 70%; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(60, 35, 5, 0.42), rgba(60, 35, 5, 0)); filter: blur(8px);
 }
 
-/* The jar, layered from one product photo. --lid = where the lid ends. */
-.jar { --lid: 14.5%; --jar: url("/hero/lotus-glass-jar.webp"); position: relative; z-index: 1; aspect-ratio: 1122 / 1402; filter: drop-shadow(0 22px 22px rgba(90, 50, 10, 0.22)); }
-.jar img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; }
-/* Empty = clear glass: the faintest tint for the jar's shape... */
-.jar-ghost { clip-path: inset(var(--lid) 0 0 0); filter: saturate(0.4) brightness(1.2) contrast(0.75); opacity: 0.15; }
-/* ...plus only the photo's own reflections, so the plastic reads as clear and shiny. */
-.jar-gloss { clip-path: inset(var(--lid) 0 0 0); filter: url(#jar-gloss-filter); opacity: 0.85; }
-.jar-filters { position: absolute; width: 0; height: 0; overflow: hidden; }
-/* ...with the printed label always in full colour (traced: flat shoulders, arched crown, gold band at the foot). */
-.jar-label { clip-path: polygon(0% 35.9%, 29.4% 35.9%, 30.8% 33%, 35.7% 31.4%, 42.8% 28.5%, 49.9% 27.5%, 57% 28.5%, 64.2% 31.4%, 69.2% 33%, 70.6% 35.9%, 100% 35.9%, 100% 83.2%, 71.3% 84%, 49.9% 84.3%, 26.7% 84%, 0% 83.2%); }
-.jar-mask {
-  position: absolute; inset: 0; clip-path: inset(var(--lid) 0 0 0);
-  -webkit-mask: var(--jar) center / 100% 100% no-repeat; mask: var(--jar) center / 100% 100% no-repeat;
+/* No stand while falling: just a soft contact shadow where each jar meets the floor. */
+.plinth {
+  position: absolute; z-index: 0; left: 50%; bottom: -3%; width: 92%; aspect-ratio: 6; translate: -50% 0;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(60, 35, 5, 0.38), rgba(60, 35, 5, 0.12) 60%, rgba(60, 35, 5, 0));
+  filter: blur(6px);
 }
-.jar-level { position: absolute; inset: 0; overflow: hidden; transform: translateY(14.5%); }
-.jar-full { transform: translateY(-14.5%); }
-/* Glossy ghee surface that rides the fill line, with rings where the stream lands. */
-.jar-surface {
-  position: absolute; left: -4%; right: -4%; top: -1.6%; height: 3.4%; opacity: 0;
-  background: radial-gradient(50% 50% at 50% 50%, rgba(255, 249, 214, 0.95), rgba(255, 228, 130, 0.7) 45%, rgba(214, 150, 20, 0) 72%);
-  animation: surface 1.4s ease-in-out infinite alternate;
-}
-.jar-surface i {
-  position: absolute; left: 50%; top: 50%; width: 26%; height: 70%; margin: -0.5em 0 0 -13%; border-radius: 50%;
-  border: 1.5px solid rgba(255, 246, 210, 0.95); animation: ripple 1.1s ease-out infinite;
-}
-.jar-surface i + i { animation-delay: 0.55s; }
-@keyframes surface { from { transform: translateX(-1.5%) scaleY(0.85); } to { transform: translateX(1.5%) scaleY(1.15); } }
-@keyframes ripple { from { transform: scale(0.3); opacity: 1; } to { transform: scale(2.4); opacity: 0; } }
-.lid-rig { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
-.jar-lid { clip-path: inset(0 0 calc(100% - var(--lid)) 0); }
-/* Hand photo: fingertips rest on the lid. Nudge --hand-* to line up a new photo. */
-.jar .jar-hand {
-  --hand-w: 118%; --hand-x: 0%; --hand-y: 11%;
-  inset: auto; left: calc(50% + var(--hand-x)); bottom: calc(100% - var(--hand-y)); top: auto;
-  width: var(--hand-w); height: auto; translate: -50% 0;
-  opacity: 0; filter: drop-shadow(0 14px 18px rgba(60, 30, 10, 0.25));
-}
-.jar .jar-hand.is-missing { display: none; }
 
-/* The pour: a stream of real-looking ghee falling into the open jar. */
-.pour {
-  position: absolute; z-index: 0; left: 50%; bottom: 6%; width: 2.6%; height: 170svh;
-  transform: translateX(-50%); visibility: hidden; pointer-events: none;
-}
-.pour-fall, .pour-body { position: absolute; inset: 0; display: block; }
-/* The wobble lives on a pseudo-element: GSAP owns .pour-body's transform. */
-.pour-body::before {
-  content: ""; position: absolute; inset: 0; border-radius: 999px;
-  background: linear-gradient(90deg, #c98a0e 0%, #f2c232 22%, #fff1b8 46%, #f7d257 62%, #d39a12 100%);
-  box-shadow: 0 0 14px rgba(241, 194, 50, 0.55);
-  animation: wobble 0.38s ease-in-out infinite alternate;
-}
-@keyframes wobble { from { transform: scaleX(0.88); } to { transform: scaleX(1.08); } }
-.pour-drop {
-  position: absolute; left: 50%; top: 22%; width: 5%; aspect-ratio: 0.8; margin-left: -2.5%; opacity: 0;
-  border-radius: 50% 50% 50% 50% / 62% 62% 40% 40%;
-  background: radial-gradient(circle at 40% 35%, #fff1b8, #f2c232 55%, #c98a0e);
-}
-.jar > img, .jar-mask { z-index: 1; }
-.jar > .jar-label { z-index: 2; } /* printed on the outside: in front of the rising ghee and its sheen */
+/* The cow jar: the product photo (its own alpha masks the light sweep). */
+.jar { --jar: url("/hero/lotus-glass-jar.webp"); position: relative; z-index: 1; aspect-ratio: 1122 / 1402; filter: drop-shadow(0 22px 22px rgba(90, 50, 10, 0.22)); }
+.jar img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; }
 
 /* Buffalo jar: stands just left of the cow jar on its own brass stand, a touch smaller and behind. */
 .jar-buddy { position: absolute; z-index: 0; left: -62%; bottom: 3%; width: 84%; }
@@ -986,16 +935,10 @@ html.is-ready .site-header.is-tucked { transform: translateY(-100%); transition-
 
 /* ─── Phones (under 600px): the jars settle above the copy ─── */
 @media (max-width: 599px) {
-  /* The making, as a slim strip along the foot of the screen while the jar fills. */
-  .hero-steps {
-    left: var(--pad); right: var(--pad); top: auto; bottom: calc(96px + env(safe-area-inset-bottom)); translate: none;
-    grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 16px 0 0;
-  }
-  .hero-steps-rail { left: 0; right: 0; top: 0; bottom: auto; width: auto; height: 2px; }
-  .hero-steps-fill { transform-origin: 0 50%; transform: scaleX(var(--sp, 0)); }
-  .hero-steps li { gap: 5px; font-size: 15px; text-align: left; }
-  .hero-steps li b { font-size: 9px; letter-spacing: 0.2em; }
-  .hero-steps li.is-on { transform: translateY(-2px); }
+  .hero-words { font-size: clamp(54px, 17vw, 84px); }
+  .hero-word { top: var(--jars-top, 50%); translate: 0 -115%; }
+  .hero-word.is-l { right: 50%; padding-right: 0.12em; }
+  .hero-word.is-r { left: 50%; padding-left: 0.12em; }
   .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hero { display: flex; flex-direction: column; justify-content: center; gap: clamp(14px, 2.4svh, 26px); min-height: 0; padding: 84px var(--pad) 24px; }
   /* the cow + buffalo pair sits centred above the copy, with room for the brass stands */
@@ -1095,7 +1038,7 @@ html.is-ready .site-header.is-tucked { transform: translateY(-100%); transition-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   .grain { animation: none; }
-  .hero-stamp svg, .jar-surface, .jar-surface i, .pour-body::before { animation: none; }
+  .hero-stamp svg { animation: none; }
   .hero-dust { display: none; }
   .reviews-track { animation: none; width: auto; }
   .reviews-row { -webkit-mask: none; mask: none; overflow-x: auto; }
