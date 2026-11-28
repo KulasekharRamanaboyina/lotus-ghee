@@ -10,7 +10,7 @@ const telugu = Tiro_Telugu({ weight: "400", subsets: ["telugu", "latin"], variab
 
 export const metadata: Metadata = {
   title: "Lotus Ghee — Pure ghee, the way home made it",
-  description: "Cow ghee, buffalo ghee and A2 cow ghee from Lotus. Pure, aromatic and free of preservatives, in packs from 15 ml to 15 ltr.",
+  description: "Cow ghee and buffalo ghee from Lotus. Pure, aromatic and free of preservatives, in packs from 15 ml to 15 ltr.",
   icons: {
     icon: [
       { url: "/favicon.png", type: "image/png", sizes: "512x512" },

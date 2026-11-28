@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 declare global {
   interface Window { __lotusReady?: boolean }
@@ -8,19 +8,21 @@ declare global {
 
 type Phase = "loading" | "blessing" | "opening" | "gone";
 
-const messages = ["The lotus opens", "Warming the ghee", "Filling the pot", "Made with care"];
-const rays = Array.from({ length: 18 }, (_, i) => i * 20);
-
-/** Clay ghee pot (photo cut-out, 1249 × 1024): open lid, ghee pouring from a wooden spoon. */
-function Pot() {
-  return <img className="lp-pot-art" src="/clay-ghee-pot.webp" alt="" width={1249} height={1024} fetchPriority="high" />;
-}
+const messages = ["The lotus opens", "Warming the ghee", "Pouring with care", "Made with care"];
+// Golden motes rising from the flower: fixed values so server and client render alike.
+const motes = Array.from({ length: 22 }, (_, i) => ({
+  x: 20 + ((i * 37) % 60),            // start across the middle of the flower (% of stage)
+  drift: ((i * 53) % 48) - 24,        // sideways sway (px)
+  size: 4 + ((i * 7) % 6),            // px
+  dur: 3.6 + ((i * 11) % 9) * 0.25,   // s
+  delay: 0.9 + ((i * 13) % 16) * 0.22 // s, after the lotus has opened
+}));
 
 export default function Preloader() {
   const [phase, setPhase] = useState<Phase>("loading");
   const [msg, setMsg] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
-  const potRef = useRef<HTMLDivElement>(null);
+  const lotusRef = useRef<HTMLImageElement>(null);
   const countRef = useRef<HTMLSpanElement>(null);
   const barRef = useRef<HTMLSpanElement>(null);
 
@@ -48,8 +50,8 @@ export default function Preloader() {
       const p = held * held * (3 - 2 * held);
       if (countRef.current) countRef.current.textContent = String(Math.round(p * 100)).padStart(3, "0");
       if (barRef.current) barRef.current.style.transform = `scaleX(${p})`;
-      // The pot rises out of the flower as the page loads.
-      if (potRef.current) potRef.current.style.transform = `translateY(${((1 - p) * 112).toFixed(2)}%)`;
+      // The lotus fills with colour from the roots up, like ghee rising in a vessel.
+      rootRef.current?.style.setProperty("--p", p.toFixed(4));
       const m = p < 0.3 ? 0 : p < 0.66 ? 1 : 2;
       if (m !== lastMsg) { lastMsg = m; setMsg(m); }
 
@@ -57,10 +59,10 @@ export default function Preloader() {
         setPhase("blessing");
         setMsg(3);
         timers.push(window.setTimeout(() => {
-          const r = potRef.current?.getBoundingClientRect();
+          const r = lotusRef.current?.getBoundingClientRect();
           if (r && rootRef.current) {
             rootRef.current.style.setProperty("--cx", `${r.left + r.width / 2}px`);
-            rootRef.current.style.setProperty("--cy", `${r.top + r.height * 0.68}px`);
+            rootRef.current.style.setProperty("--cy", `${r.top + r.height * 0.5}px`);
           }
           setPhase("opening");
           document.documentElement.classList.add("is-ready");
@@ -88,17 +90,26 @@ export default function Preloader() {
       <div className="loader-center" aria-hidden="true">
         <div className="lp-stage">
           <span className="lp-glow" />
-          <svg className="lp-rays" viewBox="0 0 200 200">
-            {rays.map((a) => (
-              <line key={a} pathLength={1} x1="100" y1="30" x2="100" y2={a % 40 === 0 ? 8 : 16} transform={`rotate(${a} 100 100)`} />
+          <span className="lp-motes">
+            {motes.map((m, i) => (
+              <i
+                key={i}
+                style={{
+                  left: `${m.x}%`, width: m.size, height: m.size,
+                  "--drift": `${m.drift}px`, animationDuration: `${m.dur}s`, animationDelay: `${m.delay}s`,
+                } as React.CSSProperties}
+              />
             ))}
-          </svg>
-          <span className="lp-shadow" />
-          <img className="lp-lotus is-back" src="/logo.png" alt="" />
-          <div className="lp-window">
-            <div className="lp-pot" ref={potRef}><Pot /></div>
-          </div>
-          <img className="lp-lotus is-front" src="/logo.png" alt="" />
+          </span>
+          <span className="lp-reflect"><img src="/logo.png" alt="" /></span>
+          <span className="lp-flower">
+            <img className="lp-lotus is-ghost" src="/logo.png" alt="" />
+            <span className="lp-fill"><img className="lp-lotus" ref={lotusRef} src="/logo.png" alt="" /></span>
+            <span className="lp-level" />
+            <span className="lp-sheen" />
+          </span>
+          <span className="lp-drop" />
+          <span className="lp-flash" />
         </div>
 
         <div className="loader-type">

@@ -136,7 +136,7 @@ h2 em { color: var(--kumkum); }
 .kolam .ring-dots { stroke-dasharray: 0.1 4.3; stroke-width: 1.6; }
 .kolam .dot { fill: currentColor; stroke: none; }
 
-/* ─── Preloader: the Lotus opens, a clay ghee pot rises from it ─── */
+/* ─── Preloader: the Lotus opens ─── */
 .loader {
   --cx: 50%; --cy: 42%;
   position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; overflow: hidden;
@@ -147,46 +147,98 @@ h2 em { color: var(--kumkum); }
 }
 /* If scripts never run, never trap the visitor behind the loader. */
 @keyframes ld-failsafe { to { opacity: 0; visibility: hidden; pointer-events: none; } }
-/* Exit: the scene is drawn back into the pot, and the site opens around it. */
+/* Exit: the scene is drawn back into the lotus, and the site opens around it. */
 .loader.is-opening { clip-path: circle(0px at var(--cx) var(--cy)); pointer-events: none; }
 
 .loader-center { position: relative; z-index: 1; display: grid; justify-items: center; gap: 22px; transition: transform 1.1s cubic-bezier(0.77, 0, 0.18, 1); }
 .loader.is-opening .loader-center { transform: scale(1.1); }
 
 /* Stage geometry is in units of its width (--w). Logo is 1736×1204, so its height is .6935w. */
-.lp-stage { --w: min(clamp(260px, 44vh, 420px), 84vw); position: relative; width: var(--w); height: var(--w); }
-.lp-lotus { position: absolute; left: 0; bottom: 0; width: 100%; height: auto; transform-origin: 50% 85%; animation: lp-open 1.2s cubic-bezier(0.2, 0.9, 0.25, 1) backwards; }
-/* the lower petals and leaves sit in front of the pot, cupping it */
-.lp-lotus.is-front { clip-path: ellipse(36% 44% at 50% 100%); }
-.lp-shadow { position: absolute; left: 10%; right: 10%; bottom: -3%; height: 7%; border-radius: 50%; background: radial-gradient(closest-side, rgba(70, 40, 10, 0.22), transparent); animation: lp-fade 1.2s 0.2s backwards; }
-
-/* the pot only exists above this line, so it seems to rise out of the flower */
-.lp-window { position: absolute; left: 0; right: 0; top: 0; bottom: calc(var(--w) * 0.208); overflow: hidden; }
-/* the jute mat at the foot of the photo sits below the window line, hidden by the front petals */
-.lp-pot { position: absolute; left: 12%; width: 76%; bottom: calc(var(--w) * -0.02); transform: translateY(112%); will-change: transform; }
-/* the foot of the photo (pot base + jute mat) dissolves into the petals instead of ending on a hard line */
-.lp-pot-art {
-  display: block; width: 100%; height: auto; max-width: none; filter: drop-shadow(0 12px 16px rgba(70, 30, 8, 0.3));
-  /* ...and the spoon handle, cut off at the top of the photo, tapers away at the top-right corner */
-  -webkit-mask: linear-gradient(180deg, #000 62%, transparent 82%), linear-gradient(212deg, transparent 0%, transparent 4%, #000 16%);
-  -webkit-mask-composite: source-in;
-  mask: linear-gradient(180deg, #000 62%, transparent 82%), linear-gradient(212deg, transparent 0%, transparent 4%, #000 16%);
-  mask-composite: intersect;
+.lp-stage { --w: min(clamp(260px, 44vh, 420px), 84vw); position: relative; width: var(--w); height: var(--w); margin: calc(var(--w) * -0.22) 0 calc(var(--w) * 0.14); }
+/* the flower breathes gently while the page loads */
+.lp-flower {
+  --level: calc((1 - var(--p, 0)) * 100%); /* fill surface, measured from the top of the flower */
+  position: absolute; z-index: 2; left: 0; bottom: 0; width: 100%; aspect-ratio: 1736 / 1204; transform-origin: 50% 85%;
+  animation: lp-open 1.2s cubic-bezier(0.2, 0.9, 0.25, 1) backwards, lp-breathe 4.8s 1.2s ease-in-out infinite;
 }
-.loader.is-blessing .lp-pot-art, .loader.is-opening .lp-pot-art { animation: lp-float 2.6s 0.9s ease-in-out infinite; }
+.lp-lotus { display: block; width: 100%; height: auto; }
+/* the empty flower: a faint, gold-toned ghost of the logo */
+.lp-lotus.is-ghost { opacity: 0.3; filter: grayscale(1) sepia(1) saturate(2.4) hue-rotate(-6deg) brightness(1.02); }
+/* the coloured flower, revealed from the roots up as the page loads */
+.lp-fill { position: absolute; inset: 0; clip-path: inset(var(--level) 0 0 0); }
+/* the glowing surface of the rising ghee, drawn only where the flower is */
+.lp-level {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, transparent calc(var(--level) - 5%), rgba(255, 228, 150, 0.95) var(--level), rgba(246, 201, 69, 0.35) calc(var(--level) + 2%), transparent calc(var(--level) + 9%));
+  -webkit-mask: url(/logo.png) center / 100% 100% no-repeat; mask: url(/logo.png) center / 100% 100% no-repeat;
+  transition: opacity 0.6s;
+}
+.loader.is-blessing .lp-level, .loader.is-opening .lp-level { opacity: 0; }
+/* a band of light glides across the petals (masked to the logo's own shape) */
+.lp-sheen {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.55;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 236, 190, 0.85) 50%, transparent 60%) 0 0 / 300% 100% no-repeat;
+  -webkit-mask: url(/logo.png) center / 100% 100% no-repeat; mask: url(/logo.png) center / 100% 100% no-repeat;
+  animation: lp-sheen 3.4s 1.1s ease-in-out infinite;
+}
+/* the lotus sits on still water: a faint, fading reflection below it */
+.lp-reflect { position: absolute; z-index: 1; left: 0; top: 100%; width: 100%; height: calc(var(--w) * 0.2); overflow: hidden; pointer-events: none; opacity: 0.26; -webkit-mask: linear-gradient(180deg, #000, transparent 90%); mask: linear-gradient(180deg, #000, transparent 90%); animation: lp-fade 1.4s 0.5s backwards; }
+.lp-reflect img { display: block; width: 100%; height: auto; transform: scaleY(-0.55) translateY(-100%); transform-origin: 50% 0; filter: blur(1.5px); }
+.lp-reflect::after { content: ""; position: absolute; left: 6%; right: 6%; top: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-line), transparent); }
 
-/* lamp-light behind the pot */
-.lp-glow { position: absolute; left: 50%; top: calc(var(--w) * 0.5); width: calc(var(--w) * 1.15); aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; background: radial-gradient(closest-side, rgba(246, 201, 69, 0.55), rgba(241, 194, 50, 0.14) 55%, transparent); opacity: 0; transform: scale(0.6); animation: lp-glow-in 1.8s 0.8s ease-out forwards; }
+/* lamp-light behind the lotus */
+.lp-glow { position: absolute; left: 50%; top: calc(var(--w) * 0.6); width: calc(var(--w) * 1.15); aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; background: radial-gradient(closest-side, rgba(246, 201, 69, 0.55), rgba(241, 194, 50, 0.14) 55%, transparent); opacity: 0; transform: scale(0.6); animation: lp-glow-in 1.8s 0.8s ease-out forwards; }
 .loader.is-blessing .lp-glow, .loader.is-opening .lp-glow { animation: lp-pulse 1.6s ease-in-out infinite; }
-.lp-rays { position: absolute; left: 50%; top: calc(var(--w) * 0.5); width: calc(var(--w) * 0.98); translate: -50% -50%; overflow: visible; animation: lp-spin 60s linear infinite; }
-.lp-rays line { stroke: var(--turmeric); stroke-width: 1.3; stroke-linecap: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; opacity: 0.85; transition: stroke-dashoffset 0.9s var(--ease) 0.25s; }
-.loader.is-blessing .lp-rays line, .loader.is-opening .lp-rays line { stroke-dashoffset: 0; }
+
+/* golden motes of ghee drift up out of the flower */
+.lp-motes { position: absolute; z-index: 1; inset: 0; pointer-events: none; }
+.lp-motes i {
+  position: absolute; bottom: 24%; border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, #fff7d6 0%, var(--ghee) 45%, rgba(241, 194, 50, 0) 72%);
+  box-shadow: 0 0 12px 2px rgba(241, 194, 50, 0.65);
+  animation: lp-mote 4s ease-out infinite;
+}
+
+/* as loading completes, a drop of ghee falls onto the lotus and it flares with light */
+.lp-drop {
+  position: absolute; z-index: 3; left: 50%; top: 0; width: calc(var(--w) * 0.04); aspect-ratio: 1; opacity: 0;
+  border-radius: 0 50% 50% 50%; transform: rotate(45deg);
+  background: radial-gradient(circle at 60% 60%, #fff3c4, var(--ghee) 45%, var(--turmeric));
+  box-shadow: 0 0 14px rgba(241, 194, 50, 0.8);
+}
+.loader.is-blessing .lp-drop { animation: lp-drop 0.7s cubic-bezier(0.55, 0, 1, 0.45) forwards; }
+.lp-flash { position: absolute; z-index: 3; left: 50%; top: calc(var(--w) * 0.55); width: calc(var(--w) * 0.9); aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; pointer-events: none; opacity: 0; background: radial-gradient(closest-side, rgba(255, 248, 225, 0.95), rgba(246, 201, 69, 0.35) 45%, transparent); }
+.loader.is-blessing .lp-flash, .loader.is-opening .lp-flash { animation: lp-flash 1.1s 0.6s ease-out forwards; }
+
+/* warm light drifts slowly across the backdrop */
+.loader::before {
+  content: ""; position: absolute; inset: -20%; pointer-events: none;
+  background:
+    radial-gradient(38% 32% at 30% 30%, rgba(241, 194, 50, 0.2), transparent 70%),
+    radial-gradient(34% 30% at 72% 70%, rgba(200, 23, 79, 0.08), transparent 70%);
+  animation: lp-drift 12s ease-in-out infinite alternate;
+}
 
 @keyframes lp-open { from { opacity: 0; transform: scale(0.6) translateY(6%); filter: blur(6px); } }
 @keyframes lp-fade { from { opacity: 0; } }
-@keyframes lp-float { 0%, 100% { transform: none; } 50% { transform: translateY(-3%); } }
 @keyframes lp-glow-in { to { opacity: 0.6; transform: scale(0.92); } }
 @keyframes lp-pulse { 0%, 100% { opacity: 0.85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.07); } }
+@keyframes lp-breathe { 0%, 100% { translate: 0 0; } 50% { translate: 0 -2.5%; } }
+@keyframes lp-sheen { 0% { background-position: 100% 0; } 60%, 100% { background-position: 0% 0; } }
+@keyframes lp-mote {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  15% { opacity: 1; }
+  70% { opacity: 0.75; }
+  100% { opacity: 0; transform: translate(var(--drift), calc(var(--w) * -0.72)) scale(1); }
+}
+@keyframes lp-drop {
+  0% { opacity: 0; translate: -50% calc(var(--w) * -0.1); scale: 0.6; }
+  20% { opacity: 1; scale: 1; }
+  88% { opacity: 1; translate: -50% calc(var(--w) * 0.3); scale: 1; }
+  100% { opacity: 0; translate: -50% calc(var(--w) * 0.34); scale: 0.2; }
+}
+@keyframes lp-flash { 0% { opacity: 0; transform: scale(0.3); } 30% { opacity: 1; } 100% { opacity: 0; transform: scale(1.5); } }
+@keyframes lp-drift { from { translate: -4% -3%; } to { translate: 4% 3%; } }
 @keyframes lp-spin { to { transform: rotate(360deg); } }
 @keyframes lp-msg { from { opacity: 0; transform: translateY(10px); } }
 
@@ -201,8 +253,8 @@ h2 em { color: var(--kumkum); }
 /* footer: caption, progress hairline, count */
 .loader-foot { position: absolute; z-index: 1; left: var(--pad); right: var(--pad); bottom: 26px; display: flex; justify-content: space-between; align-items: flex-end; padding-top: 18px; transition: opacity 0.4s; }
 .loader.is-opening .loader-foot { opacity: 0; }
-.loader-bar { position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--rule); overflow: hidden; }
-.loader-bar span { display: block; height: 100%; background: var(--kumkum); transform: scaleX(0); transform-origin: 0 50%; }
+.loader-bar { position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--rule); overflow: hidden; }
+.loader-bar span { display: block; height: 100%; background: linear-gradient(90deg, var(--turmeric), var(--ghee) 40%, var(--kumkum)); box-shadow: 0 0 8px rgba(241, 194, 50, 0.6); transform: scaleX(0); transform-origin: 0 50%; }
 .loader-msg { font: italic 400 18px/1 var(--serif); color: var(--ink-2); padding-bottom: 6px; animation: lp-msg 0.7s var(--ease) both; }
 .loader-count { display: flex; align-items: flex-start; font: 400 clamp(46px, 6.4vw, 92px)/0.8 var(--display); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; color: var(--ink); }
 .loader-count i { font: italic 400 0.32em/1 var(--serif); color: var(--kumkum); margin: 0.12em 0 0 4px; }
@@ -554,12 +606,6 @@ html.is-ready .site-header.is-tucked { transform: translateY(-100%); transition-
 /* the tin gets a wide card: jar on the left, room to breathe */
 .card.is-wide .card-stage { place-items: end center; }
 .card.is-wide .card-ring { width: min(46%, 230px); }
-
-.a2 { position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: clamp(20px, 3vw, 44px); margin-top: clamp(60px, 7vw, 110px); padding: 26px 32px 26px 26px; border: 1px solid rgba(243, 233, 212, 0.14); border-radius: 3px; }
-.a2 img { width: clamp(90px, 9vw, 130px); aspect-ratio: 1; object-fit: cover; border-radius: 50%; }
-.a2 .label { margin-bottom: 10px; }
-.a2 h3 { font: 400 clamp(30px, 3vw, 44px)/1 var(--display); margin-bottom: 8px; }
-.a2 p:last-child { color: rgba(243, 233, 212, 0.66); font: italic 400 18px var(--serif); }
 
 /* ─── Reviews ─── */
 .reviews {
@@ -980,8 +1026,6 @@ html.is-ready .site-header.is-tucked { transform: translateY(-100%); transition-
   .btn { min-height: 54px; padding: 0 22px; }
   .chip { width: 1.6em; }
   .shelf-line { font-size: 17px; }
-  .a2 { grid-template-columns: auto 1fr; padding: 20px; }
-  .a2 .link { grid-column: 1 / -1; justify-self: start; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
   .footer-grid a, .footer-grid span { font-size: 19px; }
   .footer-logo { width: 58vw; }
@@ -1040,6 +1084,7 @@ html.is-ready .site-header.is-tucked { transform: translateY(-100%); transition-
   .grain { animation: none; }
   .hero-stamp svg { animation: none; }
   .hero-dust { display: none; }
+  .lp-motes, .lp-sheen, .lp-drop, .lp-flash, .loader::before { display: none; }
   .reviews-track { animation: none; width: auto; }
   .reviews-row { -webkit-mask: none; mask: none; overflow-x: auto; }
   .reviews-set[aria-hidden="true"] { display: none; }

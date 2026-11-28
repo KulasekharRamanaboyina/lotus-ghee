@@ -103,7 +103,7 @@ function ReviewCard({ r }: { r: Review }) {
   );
 }
 
-const marqueeWords = ["Cow Ghee", "Buffalo Ghee", "A2 Cow Ghee", "15 ml to 15 ltr", "No preservatives", "Pure · Aromatic · Nutritious"];
+const marqueeWords = ["Cow Ghee", "Buffalo Ghee", "15 ml to 15 ltr", "No preservatives", "Pure · Aromatic · Nutritious"];
 
 /* ——— small pieces ——— */
 
@@ -193,6 +193,9 @@ export default function Home() {
   /* Smooth scroll + every scroll-driven animation. */
   useLayoutEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
+    // Reveals replay every time they come into view, not just the first time:
+    // play on the way in (either direction), reset once fully off the top, ease back out when scrolled back past the start.
+    ScrollTrigger.defaults({ toggleActions: "play reset play reverse" });
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     let lenis: Lenis | null = null;
@@ -455,13 +458,21 @@ export default function Home() {
         gsap.utils.toArray<HTMLElement>(".shelf").forEach((shelf) => {
           gsap.from(shelf.querySelectorAll(".shelf-head > *"), { y: 30, opacity: 0, duration: 1.1, stagger: 0.07, ease: "expo.out", scrollTrigger: { trigger: shelf, start: "top 80%" } });
         });
-        gsap.set(".card", { opacity: 0, y: 90, rotateX: -24, transformOrigin: "50% 0%" });
+        const cardOut = { opacity: 0, y: 90, rotateX: -24 };
+        gsap.set(".card", { ...cardOut, transformOrigin: "50% 0%" });
+        // Dealt in every time they scroll into view, from either direction.
+        const dealIn = (batch: Element[]) => {
+          gsap.to(batch, { opacity: 1, y: 0, rotateX: 0, duration: 1.3, stagger: 0.09, ease: "expo.out", overwrite: true });
+          gsap.fromTo(batch.map((c) => c.querySelector(".card-jar")), { yPercent: 35, scale: 0.85, opacity: 0 }, { yPercent: 0, scale: 1, opacity: 1, duration: 1.4, stagger: 0.09, delay: 0.15, ease: "expo.out", overwrite: true });
+        };
         ScrollTrigger.batch(".card", {
-          start: "top 90%", once: true,
-          onEnter: (batch) => {
-            gsap.to(batch, { opacity: 1, y: 0, rotateX: 0, duration: 1.3, stagger: 0.09, ease: "expo.out" });
-            gsap.from(batch.map((c) => c.querySelector(".card-jar")), { yPercent: 35, scale: 0.85, opacity: 0, duration: 1.4, stagger: 0.09, delay: 0.15, ease: "expo.out" });
-          },
+          start: "top 90%",
+          onEnter: dealIn,
+          onEnterBack: dealIn,
+          // gone off the top: reset unseen, ready to deal in again on the way back up
+          onLeave: (batch) => gsap.set(batch, { ...cardOut, overwrite: true }),
+          // scrolled back below the start: gather them back up so they deal in again on the way down
+          onLeaveBack: (batch) => gsap.to(batch, { ...cardOut, duration: 0.6, stagger: 0.05, ease: "power2.in", overwrite: true }),
         });
 
         /* Cards tilt toward the cursor; a light follows it across the face. */
@@ -558,6 +569,13 @@ export default function Home() {
             cleanups.push(() => { el.removeEventListener("pointermove", move); el.removeEventListener("pointerleave", leave); });
           });
         }
+
+        // Triggers were created section by section, not top to bottom, so some reveals measured their
+        // position before the pinned sections above them (promises, origin) added their scroll length.
+        // Re-order them by page position and re-measure so each one knows exactly where it sits —
+        // replaying reveals depend on that, or they think they've already been scrolled past.
+        ScrollTrigger.sort();
+        ScrollTrigger.refresh();
 
         return () => {
           window.removeEventListener("lotus:ready", play);
@@ -694,9 +712,9 @@ export default function Home() {
               <Line>the way</Line>
               <Line><em>home</em> made&nbsp;it.</Line>
             </h1>
-            <p className="hero-lede fade-up">Golden, fragrant and free of preservatives. Lotus brings the authentic taste of tradition to everyday meals — in cow, buffalo and A2 cow ghee.</p>
+            <p className="hero-lede fade-up">Golden, fragrant and free of preservatives. Lotus brings the authentic taste of tradition to everyday meals — in cow and buffalo ghee.</p>
             <div className="hero-actions fade-up">
-              <a className="btn" data-magnetic href="#products" onClick={(e) => { e.preventDefault(); go("products"); }}><span>See the range</span><Arrow /></a>
+              <a className="btn" data-magnetic href="#products" onClick={(e) => { e.preventDefault(); go("products"); }}><span>View all products</span><Arrow /></a>
               <a className="link" href={wa("Hi Lotus Ghee, I’d like to place an order.")} target="_blank" rel="noopener noreferrer"><WaIcon /> Order on WhatsApp</a>
             </div>
           </div>
@@ -868,16 +886,6 @@ export default function Home() {
               );
             })}
           </div>
-
-          <article className="a2" data-rise>
-            <img src="/a2-ghee-ultrahd.webp" alt="A brass bowl of golden A2 cow ghee" loading="lazy" />
-            <div>
-              <p className="label">(Also from Lotus)</p>
-              <h3>A2 Cow Ghee</h3>
-              <p>From indigenous cows, crafted for everyday wellness.</p>
-            </div>
-            <a className="link link-light" href={wa("Hi Lotus Ghee, I’m interested in A2 Cow Ghee. Please share the price and availability.")} target="_blank" rel="noopener noreferrer">Ask about A2 <Arrow /></a>
-          </article>
         </section>
 
         {/* ——— Reviews ——— */}
@@ -975,7 +983,7 @@ export default function Home() {
         <div className="footer-grid">
           <div><p className="label">Visit</p>{nav.slice(0, 4).map(([id, label]) => <a key={id} href={`#${id}`} onClick={(e) => { e.preventDefault(); go(id); }}>{label}</a>)}</div>
           <div><p className="label">Talk to us</p><a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noopener noreferrer">+91 99592 16999</a><a href="mailto:hello@lotusghee.com">hello@lotusghee.com</a></div>
-          <div><p className="label">Our ghee</p><span>Cow Ghee</span><span>Buffalo Ghee</span><span>A2 Cow Ghee</span></div>
+          <div><p className="label">Our ghee</p><span>Cow Ghee</span><span>Buffalo Ghee</span></div>
         </div>
         <div className="footer-mark">
           {/* The Lotus emblem glows behind the 3D wordmark. */}
