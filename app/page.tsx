@@ -189,6 +189,7 @@ export default function Home() {
   const lenisRef = useRef<Lenis | null>(null);
   const finishHeroRef = useRef<(() => void) | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [here, setHere] = useState<string | null>(null); // the section in view when the menu opens
 
   /* Smooth scroll + every scroll-driven animation. */
   useLayoutEffect(() => {
@@ -633,6 +634,15 @@ export default function Home() {
   useEffect(() => {
     if (menuOpen) lenisRef.current?.stop(); else lenisRef.current?.start();
     document.documentElement.classList.toggle("menu-open", menuOpen);
+    if (menuOpen) {
+      // Mark where the visitor is: the last menu section whose top has passed the upper part of the screen.
+      let current: string | null = null;
+      for (const id of ["our-ghee", "process", "products", "reviews", "about-us", "contact"]) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= window.innerHeight * 0.45) current = id;
+      }
+      setHere(current);
+    }
   }, [menuOpen]);
 
   const go = (id: string) => {
@@ -676,15 +686,36 @@ export default function Home() {
       </header>
 
       <div id="mobile-menu" className={`mobile-menu ${menuOpen ? "is-open" : ""}`} aria-hidden={!menuOpen}>
+        <img className="mm-lotus" src="/logo.png" alt="" aria-hidden="true" />
+        <div className="mm-head mm-rise" style={{ "--i": 0 } as React.CSSProperties}>
+          <span>Menu</span><span lang="te" aria-hidden="true">నెయ్యి</span>
+        </div>
         <nav aria-label="Mobile">
           {mobileNav.filter(([id]) => id !== "reviews" || shownReviews.length > 0).map(([id, label], i) => (
-            <a key={id} href={`#${id}`} tabIndex={menuOpen ? 0 : -1} style={{ "--i": i } as React.CSSProperties} onClick={(e) => { e.preventDefault(); go(id); }}>
-              <small>0{i + 1}</small>{label}
+            <a key={id} className={`mm-rise ${here === id ? "is-here" : ""}`} aria-current={here === id ? "location" : undefined} href={`#${id}`} tabIndex={menuOpen ? 0 : -1} style={{ "--i": i + 1 } as React.CSSProperties} onClick={(e) => { e.preventDefault(); go(id); }}>
+              <small>0{i + 1}</small>
+              <span className="mm-text">{label}</span>
+              <span className="mm-arrow"><Arrow /></span>
             </a>
           ))}
         </nav>
-        <a className="btn btn-light" tabIndex={menuOpen ? 0 : -1} href={wa("Hi Lotus Ghee, I’d like to know more about your ghee.")} target="_blank" rel="noopener noreferrer"><WaIcon /> Order on WhatsApp</a>
-        <span className="mobile-menu-te" lang="te" aria-hidden="true">నెయ్యి</span>
+        <div className="mm-shelf mm-rise" style={{ "--i": 7 } as React.CSSProperties}>
+          {([["Cow Ghee", "/hero/lotus-glass-jar.webp"], ["Buffalo Ghee", "/hero/lotus-buffalo-jar.webp"]] as const).map(([name, src]) => (
+            <a key={name} className="mm-pack" href="#products" tabIndex={menuOpen ? 0 : -1} onClick={(e) => { e.preventDefault(); go("products"); }}>
+              <img src={src} alt="" width={1122} height={1402} />
+              <span><b>{name}</b><small>View sizes</small></span>
+              <span className="mm-pack-go" aria-hidden="true"><Arrow /></span>
+            </a>
+          ))}
+        </div>
+        <div className="mm-foot mm-rise" style={{ "--i": 8 } as React.CSSProperties}>
+          <a className="mm-wa" tabIndex={menuOpen ? 0 : -1} href={wa("Hi Lotus Ghee, I’d like to know more about your ghee.")} target="_blank" rel="noopener noreferrer"><WaIcon /> Order on WhatsApp</a>
+          <div className="mm-contact">
+            <a href={`tel:+${WHATSAPP}`} tabIndex={menuOpen ? 0 : -1}>+91 99592 16999</a>
+            <a href="mailto:hello@lotusghee.com" tabIndex={menuOpen ? 0 : -1}>hello@lotusghee.com</a>
+          </div>
+          <p className="mm-tag">Pure · Aromatic · Nutritious</p>
+        </div>
       </div>
 
       <main>
